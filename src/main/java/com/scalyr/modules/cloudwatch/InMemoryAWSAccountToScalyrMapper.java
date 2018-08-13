@@ -3,6 +3,11 @@ package com.scalyr.modules.cloudwatch;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * An in-memory implementation of {@link AWSAccountToScalyrMapper} for testing purposes
+ * 
+ * @author Esteban Robles Lunax
+ */
 public class InMemoryAWSAccountToScalyrMapper implements AWSAccountToScalyrMapper {
 
   private Map<String, String> scalyrKeyMapping;

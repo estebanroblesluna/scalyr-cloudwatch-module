@@ -11,6 +11,11 @@ import software.amazon.awssdk.services.kinesis.KinesisAsyncClient;
 import software.amazon.kinesis.common.ConfigsBuilder;
 import software.amazon.kinesis.coordinator.Scheduler;
 
+/**
+ * An ingestor of CloudWatch logs produced inside Kinesis into Scalyr
+ * 
+ * @author Esteban Robles Luna
+ */
 public class KinesisScalyrIngestor {
 
   private final KinesisAsyncClient kinesisClient;
@@ -32,7 +37,9 @@ public class KinesisScalyrIngestor {
         .build();
   }
   
-  
+  /**
+   * Starts the ingestion process in the background
+   */
   public void start() {
     DynamoDbAsyncClient dynamoClient = DynamoDbAsyncClient
         .builder()

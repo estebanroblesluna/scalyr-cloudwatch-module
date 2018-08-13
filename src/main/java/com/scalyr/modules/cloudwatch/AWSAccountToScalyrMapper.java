@@ -1,8 +1,10 @@
 package com.scalyr.modules.cloudwatch;
 
 /**
+ * An AWSAccountToScalyrMapper maps between AWS account information 
+ * into Scalyr private information
  * 
- * @author esteban
+ * @author Esteban Robles Luna
  */
 public interface AWSAccountToScalyrMapper {
 

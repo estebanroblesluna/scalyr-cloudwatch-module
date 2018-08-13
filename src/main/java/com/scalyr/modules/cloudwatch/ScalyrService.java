@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpHeaders;
@@ -20,6 +21,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
 
+/**
+ * A thread-safe implementation of the Scalyr Java API to ingest logs for multiple
+ * user accounts
+ * 
+ * @author Esteban Robles Luna
+ */
 public class ScalyrService {
 
   private static Log log = LogFactory.getLog(ScalyrService.class);
@@ -53,7 +60,7 @@ public class ScalyrService {
    * @throws ScalyrUploadException if the service is unable to upload the logs
    */
   public void flushLog(String scalyrWriteKey, String host, String logfile, String parser, StringBuilder bodyBuffer) throws ScalyrUploadException {
-    if (bodyBuffer.length() > 0) {
+    if (StringUtils.isNotBlank(scalyrWriteKey) && bodyBuffer.length() > 0) {
       log.info("Flushing events to Scalyr");
       List<BasicNameValuePair> queryParams = new ArrayList<BasicNameValuePair>();
       queryParams.add(new BasicNameValuePair("token", scalyrWriteKey));

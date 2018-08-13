@@ -1,9 +1,13 @@
 package com.scalyr.modules.cloudwatch;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.util.zip.GZIPInputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,6 +28,11 @@ import software.amazon.kinesis.lifecycle.events.ShutdownRequestedInput;
 import software.amazon.kinesis.processor.ShardRecordProcessor;
 import software.amazon.kinesis.retrieval.KinesisClientRecord;
 
+/**
+ * A {@link ShardRecordProcessor} that ingest log data into Scalyr
+ * 
+ * @author Esteban Robles Luna
+ */
 public class KinesisCloudwatchLogProcessor implements ShardRecordProcessor {
 
   private static Log log = LogFactory.getLog(KinesisCloudwatchLogProcessor.class);
@@ -61,8 +70,9 @@ public class KinesisCloudwatchLogProcessor implements ShardRecordProcessor {
     
     for (KinesisClientRecord record : processRecordsInput.records()) {
       try {
-        //TODO clean up error
-        String data = new String(record.data().array(), "UTF-8");
+        log.info("Parsing Kinesis record...");
+        String data = this.getDataAsString(record);
+        
         JsonNode jsonObject = mapper.readTree(data);
         String awsAccount = jsonObject.get("owner").asText();
         String host = jsonObject.get("logStream").asText();
@@ -90,13 +100,26 @@ public class KinesisCloudwatchLogProcessor implements ShardRecordProcessor {
       } catch (IOException e) {
         log.error("Error parsing json", e);
       }
-      
     }
     
     this.flushLogs(lastAccount, lastHost, lastLogfile, buffer);
   }
 
+  private String getDataAsString(KinesisClientRecord record) throws IOException, UnsupportedEncodingException {
+    byte[] arr = new byte[record.data().remaining()];
+    record.data().get(arr);
+    
+    GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(arr));
+    BufferedReader bf = new BufferedReader(new InputStreamReader(gis, "UTF-8"));
+    String data = IOUtils.toString(bf);
+    IOUtils.closeQuietly(bf);
+    
+    return data;
+  }
+
   private void flushLogs(String awsAccount, String host, String logfile, StringBuilder buffer) {
+    log.info("Flushing logs to Scalyr...");
+
     String scalyrWriteKey = this.awsAccountToScalyrMapper.getScalyrKeyForAWSAccount(awsAccount);
     String parser = this.awsAccountToScalyrMapper.getParserForAWSAccount(awsAccount, logfile);
     
